@@ -1,0 +1,93 @@
+swagger: '2.0'
+
+info:
+  version: "v1.0"
+  title: Teams Info Service
+
+paths:
+  # This is a path endpoint. Change it.
+  /teams:
+    get:
+      description: Get a list of teams
+
+      # Expected responses for this operation:
+      responses:
+        # Response code
+        200:
+          description: Successful response
+          # A schema describing your response object.
+          # Use JSON Schema format
+          schema:
+            title: ArrayOfTeams
+            type: array
+            items:
+              title: Team
+              type: object
+              properties:
+                id:
+                  type: string
+                name:
+                  type: string
+  /teams/{team_id}:
+    get:
+      description: detailed view for a team
+      parameters:
+      - name: team_id
+        in: path
+        type: string
+        description: the team's id
+        required: true
+
+      responses:
+
+        200:
+          description: Successful response
+          schema:
+            title: Teams Information
+            type: object
+            properties:
+              id:
+                type: string
+              name:
+                type: string
+              members:
+                type: array
+                items:
+                  type: string
+              dn:
+                type: string
+                description: do NOT rely on it's presence
+              infrastructure-accounts:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    type:
+                      type: string
+  /user/{user_id}:
+    get:
+      description: list of teams a user is in
+      parameters:
+      - name: user_id
+        in: path
+        type: string
+        description: the user id
+        required: true
+
+      responses:
+        200:
+          description: User found
+          schema:
+            title: Teams of a user
+            type: array
+            items:
+              type: object
+              properties:
+                id:
+                  type: string
+                  description: team id
+                name:
+                  type: string
+                  description: team name
