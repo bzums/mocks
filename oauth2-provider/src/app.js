@@ -37,7 +37,7 @@ function generateToken(scope) {
         access_token: token,
         expiration_date: Date.now() + 3600 * 1000,
         token_type: 'Bearer',
-        scope: scope
+        scope: scope || []
     };
     return TOKENSTORE[token];
 }
@@ -156,7 +156,7 @@ server.get('/tokeninfo', function(req,res) {
     var response = {
         access_token: tokeninfo.access_token,
         token_type: tokeninfo.token_type,
-        scope: tokeninfo.scope,
+        scopes: tokeninfo.scope,
         expires_in: Math.floor((tokeninfo.expiration_date - Date.now()) / 1000)
     };
     res.status(200).send(response);

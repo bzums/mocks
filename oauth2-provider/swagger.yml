@@ -43,7 +43,7 @@ definitions:
       token_type:
         type: string
         example: Bearer
-      scope:
+      scopes:
         type: array
         items:
           format: string

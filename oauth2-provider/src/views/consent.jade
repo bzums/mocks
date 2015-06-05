@@ -4,17 +4,17 @@ html
         link(rel="stylesheet", href="style.css")
     body
         h1= "Consent"
-        form(action="/accept", method="POST")
-            input(name="state", type="hidden", value=state)
-            input(name="scopes", type="hidden", value=scopes)
-            p= "Do you accept these scopes?"
-            ul
-                each scope in scopes
-                    li= scope
-            button(type="submit").
-                Yes
-        form(action="/decline", method="POST")
-            input(name="state", type="hidden", value=state)
-            button(type="submit").
-                No
-        
+        p= "Do you accept these scopes?"
+        ul
+            each scp in scope
+                li= scp
+        div
+            form(action="/accept", method="POST", style="display:inline;")
+                input(name="state", type="hidden", value=state)
+                input(name="scope", type="hidden", value=scope)
+                button(type="submit").
+                    Yes
+            form(action="/decline", method="POST", style="display:inline;")
+                input(name="state", type="hidden", value=state)
+                button(type="submit").
+                    No

@@ -5,3 +5,9 @@ body {
     font-size: 150%;
     font-family: 'HelveticaNeue', 'Arial', sans-serif;
 }
+
+button {
+    font-size: inherit;
+    cursor: pointer;
+    margin-left: 20px;
+}
