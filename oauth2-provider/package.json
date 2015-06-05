@@ -1,5 +1,5 @@
 {
-  "name": "@zalando/oauth2-provider-mock",
+  "name": "@zalando/mock-oauth2-provider",
   "version": "0.0.1",
   "description": "Mocked OAuth2 authorization server",
   "main": "app.js",
@@ -14,8 +14,7 @@
     "oauth2",
     "authorization",
     "server",
-    "mock",
-    "fake"
+    "mock"
   ],
   "author": "Nikolaus Piccolotto <nikolaus.piccolotto@zalando.de>",
   "license": "Apache-2.0",
@@ -24,6 +23,9 @@
   },
   "homepage": "https://github.com/zalando-stups/mocks#readme",
   "dependencies": {
-    "express": "^4.12.4"
+    "body-parser": "^1.12.4",
+    "express": "^4.12.4",
+    "jade": "^1.10.0",
+    "node-uuid": "^1.4.3"
   }
 }
