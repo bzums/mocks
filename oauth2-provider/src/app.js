@@ -31,13 +31,13 @@ if (!process.env.ENV_CLIENTS) {
                 });
 }
 
-function generateToken(scopes) {
+function generateToken(scope) {
     var token = uuid.v4();
     TOKENSTORE[token] = {
         access_token: token,
         expiration_date: Date.now() + 3600 * 1000,
         token_type: 'Bearer',
-        scopes: scopes
+        scope: scope
     };
     return TOKENSTORE[token];
 }
@@ -110,7 +110,7 @@ server.post('/access_token', checkClientCredentials, function(req, res) {
             error: 'invalid_request'
         });
     }
-    var token = generateToken(req.query.scopes ? req.query.scopes.split(' ') : []);
+    var token = generateToken(req.query.scope ? req.query.scope.split(' ') : []);
     res.status(200).send({
         access_token: token.access_token,
         expires_in: (token.expiration_date - Date.now()) / 1000,
@@ -156,7 +156,7 @@ server.get('/tokeninfo', function(req,res) {
     var response = {
         access_token: tokeninfo.access_token,
         token_type: tokeninfo.token_type,
-        scopes: tokeninfo.scopes,
+        scope: tokeninfo.scope,
         expires_in: Math.floor((tokeninfo.expiration_date - Date.now()) / 1000)
     };
     res.status(200).send(response);
@@ -189,7 +189,7 @@ server.post('/accept', function(req, res) {
         return;
     }
     var consentRequest = PENDING_CONSENT[state],
-        token = generateToken(req.body.scopes ? req.body.scopes.split(',') : []),
+        token = generateToken(req.body.scope ? req.body.scope.split(',') : []),
         success = {
             access_token: token.access_token,
             token_type: 'Bearer',
@@ -232,7 +232,7 @@ server.get('/authorize', function(req, res) {
 
     PENDING_CONSENT[req.query.state] = req.query;
     res.render('consent', {
-        scopes: req.query.scopes ? req.query.scopes.split(' ') : [],
+        scope: req.query.scope ? req.query.scope.split(' ') : [],
         state: req.query.state
     });
 });
