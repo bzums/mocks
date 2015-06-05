@@ -1,0 +1,29 @@
+{
+  "name": "@zalando/oauth2-provider-mock",
+  "version": "0.0.1",
+  "description": "Mocked OAuth2 authorization server",
+  "main": "app.js",
+  "scripts": {
+    "test": "mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zalando-stups/mocks.git"
+  },
+  "keywords": [
+    "oauth2",
+    "authorization",
+    "server",
+    "mock",
+    "fake"
+  ],
+  "author": "Nikolaus Piccolotto <nikolaus.piccolotto@zalando.de>",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/zalando-stups/mocks/issues"
+  },
+  "homepage": "https://github.com/zalando-stups/mocks#readme",
+  "dependencies": {
+    "express": "^4.12.4"
+  }
+}
