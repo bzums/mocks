@@ -1,15 +1,46 @@
 var express = require('express'),
     server = express(),
     bodyParser = require('body-parser'),
+    basicAuth = require('basic-auth'),
     querystring = require('querystring'),
     uuid = require('node-uuid'),
 
     TOKENSTORE = {},
     PENDING_CONSENT = {},
-    // ALLOWED_CLIENTS is an optional comma-separated string of valid client ids
-    ALLOWED_CLIENTS = process.env.ENV_ALLOWED_CLIENTS ?
-                        process.env.ENV_ALLOWED_CLIENTS.split(',') :
-                        false;
+    CLIENTS;
+
+// CLIENTS = <client_id>=<client_secret>,<client_id>=<client_secret>
+if (!process.env.ENV_CLIENTS) {
+    CLIENTS = false;
+} else {
+    CLIENTS = process.env
+                .ENV_CLIENTS
+                .split(',')
+                .map(function(client) {
+                    var credentials = client.split('=');
+                    if (credentials.length === 2) {
+                        // provided secret
+                        return {
+                            id: credentials[0],
+                            secret: credentials[1]
+                        };
+                    }
+                    return {
+                        id: credentials[0]
+                    };
+                });
+}
+
+function generateToken(scopes) {
+    var token = uuid.v4();
+    TOKENSTORE[token] = {
+        access_token: token,
+        expiration_date: Date.now() + 3600 * 1000,
+        token_type: 'Bearer',
+        scopes: scopes
+    };
+    return TOKENSTORE[token];
+}
 
 // cleanup job for tokens
 setInterval(function() {
@@ -45,6 +76,51 @@ server.use(function(req, res, next) {
     res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
     next();
 });
+
+/**
+ * CLIENT CREDENTIALS FLOW
+ */
+
+function checkClientCredentials(req, res, next) {
+    var authHeader = req.headers.authorization;
+    if (!authHeader) {
+        return res.status(401).send();
+    }
+    var auth = basicAuth(req);
+    if (!auth || !auth.name || !auth.pass) {
+        return res.status(400).send();
+    }
+    if (CLIENTS) {
+        if (CLIENTS.some(function(client) {
+            return client.id === auth.name &&
+                   client.secret === auth.pass;
+        })) {
+            next();
+        } else {
+            return res.status(401).send();
+        }
+    } else {
+        next();
+    }
+}
+
+server.post('/access_token', checkClientCredentials, function(req, res) {
+    if (req.query.grant_type !== 'client_credentials') {
+        return res.status(400).send({
+            error: 'invalid_request'
+        });
+    }
+    var token = generateToken(req.query.scopes ? req.query.scopes.split(' ') : []);
+    res.status(200).send({
+        access_token: token.access_token,
+        expires_in: (token.expiration_date - Date.now()) / 1000,
+        token_type: 'Bearer'
+    });
+});
+
+/**
+ * TOKENINFO ENDPOINT
+ */
 
 server.get('/tokeninfo', function(req,res) {
     var requestedToken = req.query.access_token;
@@ -86,6 +162,10 @@ server.get('/tokeninfo', function(req,res) {
     res.status(200).send(response);
 });
 
+/**
+ * IMPLICIT FLOW
+ */
+
 server.post('/decline', function(req, res) {
     var state = req.body.state;
     if (!state) {
@@ -109,20 +189,13 @@ server.post('/accept', function(req, res) {
         return;
     }
     var consentRequest = PENDING_CONSENT[state],
-        token = uuid.v4(),
-        expiration_date = Date.now() + 3600*1000,
+        token = generateToken(req.body.scopes ? req.body.scopes.split(',') : []),
         success = {
-            access_token: token,
+            access_token: token.access_token,
             token_type: 'Bearer',
-            expires_in: 3600,
+            expires_in: (token.expiration_date - Date.now()) / 1000,
             state: state
         };
-    TOKENSTORE[token] = {
-        access_token: token,
-        expiration_date: expiration_date,
-        token_type: 'Bearer',
-        scopes: req.body.scopes ? req.body.scopes.split(',') : []
-    };
     delete PENDING_CONSENT[state];
     res.redirect(301, consentRequest.redirect_uri + '#' + querystring.stringify(success));
 });
@@ -140,20 +213,21 @@ server.get('/authorize', function(req, res) {
         return;
     }
 
-    // check mandatory fields
-    if (!req.query.response_type || !client_id) {
-        error = { error: 'invalid_request', state: req.query.state };
-        res.redirect(301, req.query.redirect_uri + '#' + querystring.stringify(error));
-        return;
-    }
     // check client_id
-    if (ALLOWED_CLIENTS !== false) {
-        if (ALLOWED_CLIENTS.indexOf(client_id) < 0 ) {
+    if (CLIENTS !== false) {
+        if (CLIENTS.map(function(c) { return c.id}).indexOf(client_id) < 0 ) {
             res.render('error', {
                 message: 'Unknown or invalid client'
             });
             return;
         }
+    }
+
+    // check mandatory fields
+    if (req.query.response_type !== 'token' || !client_id) {
+        error = { error: 'invalid_request', state: req.query.state };
+        res.redirect(301, req.query.redirect_uri + '#' + querystring.stringify(error));
+        return;
     }
 
     PENDING_CONSENT[req.query.state] = req.query;

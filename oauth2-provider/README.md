@@ -1,5 +1,7 @@
 # OAuth2 Authorization Server Mock
 
+Supports Implicit and Client Credentials Grants.
+
 ## Usage
 
 With node
@@ -11,4 +13,8 @@ With node
 ### Accepted environment variables
 
 * `PORT`
-* `ENV_ACCEPTED_CLIENTS`: Comma-separated list of accepted client IDs, e.g. `"test1,test2"`.
+* `ENV_CLIENTS`: Comma-separated list of accepted client IDs and secrets, e.g. `"client1=secret1,client2=secret2"`.
+
+## API
+
+TODO: Swagger file
