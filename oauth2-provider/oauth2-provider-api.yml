@@ -1,0 +1,140 @@
+swagger: "2.0"
+
+info:
+  version: "0.0.1"
+  title: Mock OAuth2 Authorization Server API
+  description: Supports Implicit Flow and Client Credentials Flow
+
+schemes:
+  - http
+
+basePath: /
+
+produces:
+  - text/html
+  - application/json
+
+securityDefinitions:
+  basicAuth:
+    type: basic
+
+definitions:
+  AccessToken:
+    type: object
+    properties:
+      access_token:
+        type: string
+        example: -064b-4a76-8a2d-d686ec773992
+      expires_in:
+        type: integer
+        example: 3600
+      token_type:
+        type: string
+        example: Bearer
+  AccessTokenInfo:
+    type: object
+    properties:
+      access_token:
+        type: string
+        example: 520e891d-064b-4a76-8a2d-d686ec773992
+      expires_in:
+        type: integer
+        example: 3600
+      token_type:
+        type: string
+        example: Bearer
+      scope:
+        type: array
+        items:
+          format: string
+  GenericError:
+    type: object
+    properties:
+      error:
+        type: string
+        example: invalid_request
+
+paths:
+  /authorize:
+    get:
+      description: Redirect here for the consent screen
+      produces:
+        - text/html
+      parameters:
+        - name: state
+          in: query
+          required: true
+          type: string
+          description: A random string to verify in your client
+        - name: redirect_uri
+          in: query
+          required: true
+          type: string
+          description: Where your application expects an OAuth response
+        - name: response_type
+          in: query
+          required: true
+          type: string
+          description: Must be 'token'
+        - name: client_id
+          in: query
+          required: true
+          type: string
+          description: Your client ID
+        - name: scope
+          in: query
+          type: string
+          description: Whitespace-separated list of scopes you application needs
+      responses:
+        "200":
+          description: Consent screen page
+  /tokeninfo:
+    get:
+      description: Returns more information about a token
+      produces:
+        - application/json
+      parameters:
+        - name: access_token
+          required: true
+          type: string
+          in: query
+          description: The access token you want more information about
+      responses:
+        "200":
+          description: Access token exists and is valid
+          schema:
+            $ref: "#/definitions/AccessTokenInfo"
+        "400":
+          description: Access token does not exist or is invalid
+          schema:
+            $ref: "#/definitions/GenericError"
+  /access_token:
+    post:
+      description: Returns an access token if you provide your client_id and client_secret via Basic Auth.
+      security:
+        - basicAuth: []
+      produces:
+        - application/json
+      parameters:
+        - name: grant_type
+          required: true
+          in: query
+          description: Must be client_credentials
+          type: string
+        - name: scope
+          in: query
+          description: Whitespace-separated list of scopes you application needs
+          type: string
+      responses:
+        "200":
+          description: A new token
+          schema:
+            $ref: "#/definitions/AccessToken"
+        "400":
+          description: Missing or wrong grant_type
+          schema:
+            $ref: "#/definitions/GenericError"
+        "401":
+          description: Missing or invalid authentication
+          schema:
+            $ref: "#/definitions/GenericError"
