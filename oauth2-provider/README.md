@@ -7,14 +7,17 @@ Supports Implicit and Client Credentials Grants.
 With node
 
     git checkout https://github.com/zalando-stups/mocks/tree/master/oauth2-provider
-    cd oauth2-provider
-    node src/app.js
+    cd oauth2-provider/src
+    node app.js
+
+With Docker
+
+    docker run stups/mock-oauth2-provider
 
 ### Accepted environment variables
 
-* `PORT`
 * `ENV_CLIENTS`: Comma-separated list of accepted client IDs and secrets, e.g. `"client1=secret1,client2=secret2"`.
 
 ## API
 
-TODO: Swagger file
+See [swagger.yml](swagger.yml).
