@@ -33,9 +33,15 @@ server.get('/access_token', function(req, res) {
         })
         .end(function(err, response) {
             if (err) {
+                if (err.status === 401) {
+                    // unauthorized
+                    return res.status(401).send();
+                }
                 return res.status(500).send(err);
             }
-            return res.status(200).send(response.body);
+            return req.query.json === 'true' ?
+                    res.status(200).send(response.body) :
+                    res.status(200).send(response.body.access_token);
         });
 });
 
