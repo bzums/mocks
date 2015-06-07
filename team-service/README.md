@@ -20,6 +20,21 @@ With Docker
 * `ENV_TEAM_SOURCE`: Path to a CSV file where the teams and their cloud account id are listed.
 * `ENV_TOKENINFO_URL`: URL of /tokeninfo endpoint to check OAuth2 access tokens.
 
+## File formats
+
+### user.csv
+
+    # user id, team id
+    npiccolotto,stups
+    test,stups
+    iam,greendale
+
+### team.csv
+
+    # team id, cloud account id
+    stups,84849249
+    greendale,5813148535
+
 ## API
 
 See [swagger.yml](swagger.yml).
