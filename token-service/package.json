@@ -1,0 +1,29 @@
+{
+  "name": "@zalando/mock-token-service",
+  "version": "0.0.1",
+  "description": "Mocked token service for STUPS infrastructure",
+  "main": "src/server.js",
+  "scripts": {
+    "test": "mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zalando-stups/mocks.git"
+  },
+  "keywords": [
+    "stups",
+    "token",
+    "service",
+    "mock"
+  ],
+  "author": "Nikolaus Piccolotto <nikolaus.piccolotto@zalando.de>",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/zalando-stups/mocks/issues"
+  },
+  "homepage": "https://github.com/zalando-stups/mocks#readme",
+  "dependencies": {
+    "basic-auth": "^1.0.1",
+    "superagent": "^1.2.0"
+  }
+}
