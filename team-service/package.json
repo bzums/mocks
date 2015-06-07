@@ -23,6 +23,7 @@
   "homepage": "https://github.com/zalando-stups/mocks#readme",
   "dependencies": {
     "express": "^4.12.4",
-    "sqlite3": "^3.0.8"
+    "sqlite3": "^3.0.8",
+    "superagent": "^1.2.0"
   }
 }

@@ -1,9 +1,12 @@
 var express = require('express'),
     fs = require('fs'),
     path = require('path'),
+    request = require('superagent'),
     sqlite3 = require('sqlite3').verbose(),
     db = new sqlite3.Database(':memory:'),
-    server = express();
+    server = express(),
+    OAUTH_TOKENINFO_URL = process.env.ENV_OAUTH_TOKENINFO_URL,
+    OAUTH_ENABLED = !!OAUTH_TOKENINFO_URL;
 
 process.on('exit', function() {
     db.close();
@@ -54,6 +57,57 @@ db.serialize(function() {
         teamStmt.run(team[0], team[1]);
     });
 });
+
+/**
+ * OAUTH MIDDLEWARE
+ * TODO: Extract
+ */
+
+function oauth(tokeninfo_url) {
+    function unauthorized(res, reason) {
+        var body = reason ?
+                    { error: reason } :
+                    undefined;
+        res
+        .status(401)
+        .send(body);
+    }
+
+    return function(req, res, next) {
+        // check if auth header is present
+        if (!req.headers.authorization) {
+            //  => else 401
+            return unauthorized(res);
+        }
+        // check if it has a token
+        if (!req.headers.authorization.indexOf('Bearer ') === 0) {
+            //  => else 401
+            return unauthorized(res);
+        }
+        var token = req.headers.authorization.substring('Bearer '.length);
+        // check if token is valid
+        request
+            .get(tokeninfo_url)
+            .query({
+                access_token: token
+            })
+            .end(function(err, response) {
+                if (err) {
+                    return unauthorized(res)
+                }
+                if (response.status === 200) {
+                    next();
+                } else {
+                    return unauthorized(res, 'invalid_token');
+                }
+            });
+    };
+};
+
+if (OAUTH_ENABLED) {
+    console.log('OAuth enabled.');
+    server.use(oauth(OAUTH_TOKENINFO_URL));
+}
 
 /**
  * API
@@ -121,4 +175,4 @@ server.get('/users/:uid', function(req, res) {
     });
 });
 
-server.listen(3000);
+server.listen(3001);
