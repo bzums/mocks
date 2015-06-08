@@ -16,7 +16,7 @@ With Docker
 
 ### Accepted environment variables
 
-* `ENV_CLIENTS`: Comma-separated list of accepted client IDs and secrets, e.g. `"client1=secret1,client2=secret2"`.
+* `CLIENTS`: Comma-separated list of accepted client IDs and secrets, e.g. `"client1=secret1,client2=secret2"`.
 
 ## API
 

@@ -18,8 +18,8 @@ With Docker
 
 ### Accepted environment variables
 
-* `ENV_OAUTH_AUTH_URL` (required): URL of the `access_token` endpoint of the authorization server.
-* `ENV_OAUTH_CREDENTIALS` (required): Client ID and secret to use at authorization server in the format "id=secret".
+* `OAUTH_AUTH_URL` (required): URL of the `access_token` endpoint of the authorization server.
+* `OAUTH_CREDENTIALS` (required): Client ID and secret to use at authorization server in the format "id=secret".
 
 ## API
 
