@@ -5,16 +5,29 @@ info:
   version: "v1.0"
   title: Token Service
 
+schemes:
+  - http
+
+basePath: /
+
+definitions:
+  Success:
+    properties:
+      access_token:
+        type: string
+        description: The access token
+      token_type:
+        type: string
+        description: Bearer
+      expires_in:
+        type: integer
+        description: Token validity in remaining seconds
+
 # Describe your paths here
 paths:
-  # This is a path endpoint. Change it.
   /access_token:
-    # This is a HTTP operation
     get:
-      # Describe this verb here. Note: you can use markdown
       description: Get access token by giving the user info
-      security:
-        - basic: []
       parameters:
         - name: scope
           in: query
@@ -23,66 +36,18 @@ paths:
               multiple times, one scope parameter for each scope
           required: false
           type: string
-        - name: realm
-          in: query
-          description: the realm where the user identity is stored
-          required: false
-          type: string
         - name: json
           in: query
-          description: true means return json format, false means only access token is returned
+          description: true means return json format, everything else means only access token is returned
           required: false
           type: boolean
       # Expected responses for this operation:
       responses:
         200:
-          $ref: '#/responses/Success'
-        default:
-          $ref: '#/responses/Error'
-
-
-responses:
-  Success:
-    description: everything ok
-    schema:
-      $ref: '#/definitions/Success'
-
-  Error:
-    description: an error occured
-    schema:
-      $ref: '#/definitions/Error'
-
-definitions:
-  Success:
-    properties:
-      # TODO redundant, this is in the HTTP status code anyways, remove?
-      code:
-        type: integer
-        description: HTTP Status code
-      message:
-        type: string
-        description: access token
-      # TODO difference of message and reason? remove?
-      reason:
-        type: string
-        description: HTTP Status message
-
-  Error:
-    properties:
-      error:
-        type: string
-        description: Small human-readable error message
-      # TODO redundant, this is in the HTTP status code anyways, remove?
-      code:
-        type: integer
-        description: HTTP status code
-      message:
-        type: string
-        description: Small human-readable error message
-      # TODO difference of message and reason? remove?
-      reason:
-        type: string
-        description: human readable HTTP status code
-securityDefinitions:
-  basic:
-    type: basic
+          description: Token information
+          schema:
+            $ref: '#/definitions/Success'
+        401:
+          description: Invalid credentials
+        500:
+          description: Unknown error
