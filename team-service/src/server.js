@@ -5,12 +5,17 @@ var express = require('express'),
     sqlite3 = require('sqlite3').verbose(),
     db = new sqlite3.Database(':memory:'),
     server = express(),
+    DATA_DIR = process.env.ENV_DATA_DIR,
     OAUTH_TOKENINFO_URL = process.env.ENV_OAUTH_TOKENINFO_URL,
     OAUTH_ENABLED = !!OAUTH_TOKENINFO_URL;
 
 process.on('exit', function() {
     db.close();
 });
+
+if (!process.env.ENV_DATA_DIR) {
+    console.log('Warning: No data directory specified!');
+}
 
 if (!process.env.ENV_USER_SOURCE) {
     console.log('Warning: No user source file specified!');
@@ -23,8 +28,8 @@ if (!process.env.ENV_TEAM_SOURCE) {
 /**
  * READ FILES
  */
-var userFile = String(fs.readFileSync(path.join(process.env.PWD, process.env.ENV_USER_SOURCE))),
-    teamFile = String(fs.readFileSync(path.join(process.env.PWD, process.env.ENV_TEAM_SOURCE)));
+var userFile = String(fs.readFileSync(path.join(DATA_DIR, process.env.ENV_USER_SOURCE))),
+    teamFile = String(fs.readFileSync(path.join(DATA_DIR, process.env.ENV_TEAM_SOURCE)));
 
 /**
  * SETUP DB
