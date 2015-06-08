@@ -4,6 +4,54 @@ info:
   version: "v1.0"
   title: Teams Info Service
 
+definitions:
+  InfrastructureAccount:
+    type: object
+    properties:
+      id:
+        type: string
+        example: 2892853535
+      type:
+        type: string
+        example: aws
+  ShortTeamInfo:
+    type: object
+    properties:
+      id:
+        type: string
+        example: stups
+      name:
+        type: string
+        example: stups
+      infrastructure-accounts:
+        type: array
+        items:
+          $ref: "#/definitions/InfrastructureAccount"
+  FullTeamInfo:
+    type: object
+    properties:
+      id:
+        type: string
+        example: stups
+      name:
+        type: string
+        example: stups
+      description:
+        type: string
+        example: Cloud Engineers
+      dn:
+        type: string
+        example: ou=users,ou=apps
+      infrastructure-accounts:
+        type: array
+        items:
+          $ref: "#/definitions/InfrastructureAccount"
+      members:
+        type: array
+        items:
+          type: string
+          example: npiccolotto
+
 paths:
   # This is a path endpoint. Change it.
   /teams:
@@ -15,19 +63,8 @@ paths:
         # Response code
         200:
           description: Successful response
-          # A schema describing your response object.
-          # Use JSON Schema format
           schema:
-            title: ArrayOfTeams
-            type: array
-            items:
-              title: Team
-              type: object
-              properties:
-                id:
-                  type: string
-                name:
-                  type: string
+            $ref: "#/definitions/ShortTeamInfo"
   /teams/{team_id}:
     get:
       description: detailed view for a team
@@ -39,33 +76,10 @@ paths:
         required: true
 
       responses:
-
         200:
           description: Successful response
           schema:
-            title: Teams Information
-            type: object
-            properties:
-              id:
-                type: string
-              name:
-                type: string
-              members:
-                type: array
-                items:
-                  type: string
-              dn:
-                type: string
-                description: do NOT rely on it's presence
-              infrastructure-accounts:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    id:
-                      type: string
-                    type:
-                      type: string
+            $ref: "#/definitions/FullTeamInfo"
   /user/{user_id}:
     get:
       description: list of teams a user is in
@@ -78,16 +92,8 @@ paths:
 
       responses:
         200:
-          description: User found
+          description: Successful response
           schema:
-            title: Teams of a user
             type: array
             items:
-              type: object
-              properties:
-                id:
-                  type: string
-                  description: team id
-                name:
-                  type: string
-                  description: team name
+              $ref: "#/definitions/ShortTeamInfo"

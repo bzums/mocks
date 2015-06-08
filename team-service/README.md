@@ -31,9 +31,9 @@ With Docker
 
 ### team.csv
 
-    # team id, cloud account id
-    stups,84849249
-    greendale,5813148535
+    # team id, description, cloud account id, dn
+    stups,Cloud Engineers,84849249,some-dn
+    greendale,Identity Managers,5813148535,other-dn
 
 ## API
 

@@ -30,14 +30,17 @@ var userFile = String(fs.readFileSync(path.join(process.env.PWD, process.env.ENV
  * SETUP DB
  */
 
-var SELECT_TEAM = 'SELECT team_id, account_id FROM teams WHERE team_id = ?;',
+var SELECT_TEAM = 'SELECT team_id, account_id, description, dn FROM teams WHERE team_id = ?;',
     SELECT_USER = 'SELECT u.uid, u.team_id, t.account_id ' +
                   'FROM teams t INNER JOIN users u ' +
-                  'WHERE u.team_id=t.team_id AND u.uid=?;';
+                  'WHERE u.team_id=t.team_id AND u.uid=?;',
+    SELECT_MEMBERS = 'SELECT uid ' +
+                     'FROM users u INNER JOIN teams t ' +
+                     'WHERE u.team_id=t.team_id AND t.team_id=?;';
 
 db.serialize(function() {
     db.run('CREATE TABLE users (uid TEXT PRIMARY KEY, team_id TEXT);');
-    db.run('CREATE TABLE teams (team_id TEXT PRIMARY KEY, account_id TEXT);');
+    db.run('CREATE TABLE teams (team_id TEXT PRIMARY KEY, description TEXT, account_id TEXT, dn TEXT);');
 
     // put users in user table
     var userStmt = db.prepare('INSERT INTO users VALUES (?, ?);');
@@ -49,12 +52,12 @@ db.serialize(function() {
     });
 
     // put teams in team table
-    var teamStmt = db.prepare('INSERT INTO teams VALUES (?, ?);');
+    var teamStmt = db.prepare('INSERT INTO teams VALUES (?, ?, ?, ?);');
     teamFile
     .split('\n')
     .forEach(function(line) {
         var team = line.split(',');
-        teamStmt.run(team[0], team[1]);
+        teamStmt.run(team[0], team[1], team[2], team[3]);
     });
 });
 
@@ -133,19 +136,24 @@ server.get('/teams', function(req, res) {
 });
 
 server.get('/teams/:team_id', function(req, res) {
-    db.get(SELECT_TEAM, req.params.team_id, function(err, row) {
+    db.get(SELECT_TEAM, req.params.team_id, function(err, team) {
         if (err) {
             return res.status(500).send(err);
         }
-        var result = {
-            id: row.team_id,
-            name: row.team_id,
-            'infrastructure-accounts': [{
-                id: row.account_id,
-                type: 'aws'
-            }]
-        };
-        return res.status(200).type('json').send(result);
+        db.all(SELECT_MEMBERS, req.params.team_id, function(err2, members) {
+            var result = {
+                id: team.team_id,
+                name: team.team_id,
+                dn: team.dn,
+                members: members.map(function(m) { return m.uid; }).sort(),
+                description: team.description,
+                'infrastructure-accounts': [{
+                    id: team.account_id,
+                    type: 'aws'
+                }]
+            };
+            return res.status(200).type('json').send(result);
+        });
     });
 });
 
