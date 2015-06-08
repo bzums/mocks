@@ -1,0 +1,29 @@
+{
+  "name": "@zalando/mock-team-service",
+  "version": "0.0.1",
+  "description": "Mocked team service for STUPS infrastructure",
+  "main": "server.js",
+  "scripts": {
+    "test": "mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zalando-stups/mocks.git"
+  },
+  "keywords": [
+    "team-service",
+    "mock",
+    "stups"
+  ],
+  "author": "Nikolaus Piccolotto <nikolaus.piccolotto@zalando.de>",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/zalando-stups/mocks/issues"
+  },
+  "homepage": "https://github.com/zalando-stups/mocks#readme",
+  "dependencies": {
+    "express": "^4.12.4",
+    "sqlite3": "^3.0.8",
+    "superagent": "^1.2.0"
+  }
+}

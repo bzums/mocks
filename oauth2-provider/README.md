@@ -8,7 +8,7 @@ With node
 
     git checkout https://github.com/zalando-stups/mocks/tree/master/oauth2-provider
     cd oauth2-provider/src
-    node app.js
+    node server.js
 
 With Docker
 

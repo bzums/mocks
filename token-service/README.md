@@ -4,6 +4,8 @@ Retrieves a token from the OAuth2 Authorization Server (mock) using client crede
 
 ## Usage
 
+The token service is accessible at port 3002.
+
 With node
 
     git checkout https://github.com/zalando-stups/mocks/tree/master/token-service
