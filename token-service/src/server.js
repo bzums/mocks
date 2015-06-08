@@ -14,7 +14,6 @@ if (!OAUTH_CREDENTIALS) {
     return;
 } else {
     OAUTH_CREDENTIALS = new Buffer(OAUTH_CREDENTIALS.split('=').join(':')).toString('base64');
-    console.log(OAUTH_CREDENTIALS);
 }
 
 server.get('/access_token', function(req, res) {
