@@ -10,11 +10,11 @@ var express = require('express'),
     CLIENTS;
 
 // CLIENTS = <client_id>=<client_secret>,<client_id>=<client_secret>
-if (!process.env.ENV_CLIENTS) {
+if (!process.env.CLIENTS) {
     CLIENTS = false;
 } else {
     CLIENTS = process.env
-                .ENV_CLIENTS
+                .CLIENTS
                 .split(',')
                 .map(function(client) {
                     var credentials = client.split('=');

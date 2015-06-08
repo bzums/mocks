@@ -1,7 +1,7 @@
 var express = require('express'),
     request = require('superagent'),
-    OAUTH_AUTH_URL = process.env.ENV_OAUTH_AUTH_URL,
-    OAUTH_CREDENTIALS = process.env.ENV_OAUTH_CREDENTIALS,
+    OAUTH_AUTH_URL = process.env.OAUTH_AUTH_URL,
+    OAUTH_CREDENTIALS = process.env.OAUTH_CREDENTIALS,
     server = express();
 
 if (!OAUTH_AUTH_URL) {

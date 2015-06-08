@@ -18,14 +18,14 @@ With Docker
 
 For the docker client to be able to read the CSV files, you have to make them accessible via a volume:
 
-    docker run -d -e ENV_USER_SOURCE=user.csv -e ENV_TEAM_SOURCE=team.csv -e ENV_DATA_DIR=/data -p 3001:3001 -v /data:<DATA_DIR> stups/mock-team-service
+    docker run -d -e USER_SOURCE=user.csv -e TEAM_SOURCE=team.csv -e DATA_DIR=/data -p 3001:3001 -v /data:<DATA_DIR> stups/mock-team-service
 
 ### Accepted environment variables
 
-* `ENV_DATA_DIR` (required): Absolute path of a directory where user and team source (see next) are located.
-* `ENV_USER_SOURCE` (required): Name of a CSV file where user and their team are listed
-* `ENV_TEAM_SOURCE` (required): Name of a CSV file where the teams and their cloud account id are listed.
-* `ENV_TOKENINFO_URL`: URL of /tokeninfo endpoint to check OAuth2 access tokens. If it's not present, requests will not be checked for tokens.
+* `DATA_DIR` (required): Absolute path of a directory where user and team source (see next) are located.
+* `USER_SOURCE` (required): Name of a CSV file where user and their team are listed
+* `TEAM_SOURCE` (required): Name of a CSV file where the teams and their cloud account id are listed.
+* `TOKENINFO_URL`: URL of /tokeninfo endpoint to check OAuth2 access tokens. If it's not present, requests will not be checked for tokens.
 
 ## File formats
 
