@@ -1,7 +1,7 @@
 var express = require('express'),
     request = require('superagent'),
-    basicAuth = require('basic-auth'),
     OAUTH_AUTH_URL = process.env.ENV_OAUTH_AUTH_URL,
+    OAUTH_CREDENTIALS = process.env.ENV_OAUTH_CREDENTIALS,
     server = express();
 
 if (!OAUTH_AUTH_URL) {
@@ -9,24 +9,18 @@ if (!OAUTH_AUTH_URL) {
     return;
 }
 
-function ensureBasicAuth(req, res, next) {
-    var authHeader = req.headers.authorization;
-    if (!authHeader) {
-        return res.status(401).send();
-    }
-    var auth = basicAuth(req);
-    if (!auth || !auth.name || !auth.pass) {
-        return res.status(400).send();
-    }
-    next();
+if (!OAUTH_CREDENTIALS) {
+    console.log('Missing OAuth credentials for authorization server.');
+    return;
+} else {
+    OAUTH_CREDENTIALS = new Buffer(OAUTH_CREDENTIALS.split('=').join(':')).toString('base64');
+    console.log(OAUTH_CREDENTIALS);
 }
-
-server.use(ensureBasicAuth);
 
 server.get('/access_token', function(req, res) {
     request
         .post(OAUTH_AUTH_URL)
-        .set('Authorization', req.headers.authorization)
+        .set('Authorization', 'Basic ' + OAUTH_CREDENTIALS)
         .query({
             scope: req.query.scope,
             grant_type: 'client_credentials'

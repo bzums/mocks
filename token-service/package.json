@@ -23,7 +23,6 @@
   },
   "homepage": "https://github.com/zalando-stups/mocks#readme",
   "dependencies": {
-    "basic-auth": "^1.0.1",
     "superagent": "^1.2.0"
   }
 }

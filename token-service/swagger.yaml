@@ -10,10 +10,6 @@ schemes:
 
 basePath: /
 
-securityDefinitions:
-  basic:
-    type: basic
-  
 definitions:
   Success:
     properties:
@@ -32,8 +28,6 @@ paths:
   /access_token:
     get:
       description: Get access token by giving the user info
-      security:
-        - basic: []
       parameters:
         - name: scope
           in: query
