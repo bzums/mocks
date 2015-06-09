@@ -105,7 +105,9 @@ function checkClientCredentials(req, res, next) {
 }
 
 server.post('/access_token', checkClientCredentials, function(req, res) {
-    if (req.query.grant_type !== 'client_credentials') {
+    // TODO: check username and password credentials for "password" grant_type
+    // see http://docs.stups.io/en/latest/user-guide/access-control.html#implementing-a-client-using-own-permissions
+    if (req.query.grant_type !== 'client_credentials' && req.query.grant_type !== 'password') {
         return res.status(400).send({
             error: 'invalid_request'
         });

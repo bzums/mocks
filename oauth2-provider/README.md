@@ -1,6 +1,6 @@
 # OAuth2 Authorization Server Mock
 
-Supports Implicit and Client Credentials Grants.
+Supports Implicit,  Client Credentials and Password Grants.
 
 ## Usage
 
