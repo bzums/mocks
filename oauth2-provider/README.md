@@ -12,7 +12,7 @@ With node
 
 With Docker
 
-    docker run stups/mock-oauth2-provider
+    docker run -it -p 3000:3000 stups/mock-oauth2-provider
 
 ### Accepted environment variables
 
@@ -21,3 +21,18 @@ With Docker
 ## API
 
 See [swagger.yml](swagger.yml).
+
+Example usage to generate a new access token:
+
+
+    $ cat > request.json << "EOF"
+    {
+        "grant_type": "password",
+        "username": "my-username",
+        "password": "my-password",
+        "scope": "uid sales_order.read_all"
+    }
+    EOF
+
+    $ curl -X POST -u my-client-id:my-client-secret -d @request.json \
+        "http://localhost:3000/access_token?realm=services"

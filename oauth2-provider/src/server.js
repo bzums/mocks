@@ -68,6 +68,7 @@ server.use(express.static('public'));
 server.use(bodyParser.urlencoded({
     extended: true
 }));
+server.use(bodyParser.json());
 
 // enable CORS for simplicity
 server.use(function(req, res, next) {
@@ -107,12 +108,14 @@ function checkClientCredentials(req, res, next) {
 server.post('/access_token', checkClientCredentials, function(req, res) {
     // TODO: check username and password credentials for "password" grant_type
     // see http://docs.stups.io/en/latest/user-guide/access-control.html#implementing-a-client-using-own-permissions
-    if (req.query.grant_type !== 'client_credentials' && req.query.grant_type !== 'password') {
+    var grant_type = req.query.grant_type || req.body.grant_type;
+    if (grant_type !== 'client_credentials' && grant_type !== 'password') {
         return res.status(400).send({
             error: 'invalid_request'
         });
     }
-    var token = generateToken(req.query.scope ? req.query.scope.split(' ') : []);
+    var scope = req.query.scope || req.body.scope;
+    var token = generateToken(scope ? scope.split(' ') : []);
     res.status(200).send({
         access_token: token.access_token,
         expires_in: (token.expiration_date - Date.now()) / 1000,
