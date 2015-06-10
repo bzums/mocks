@@ -20,6 +20,9 @@ if (!OAUTH_CREDENTIALS) {
 
 server.get('/access_token', function(req, res) {
     var auth = basicAuth(req);
+    if (!auth || !auth.name || !auth.pass) {
+        return res.status(400).send();
+    }
     request
         .post(OAUTH_AUTH_URL)
         .set('Authorization', 'Basic ' + OAUTH_CREDENTIALS)
