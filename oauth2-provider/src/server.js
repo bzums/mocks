@@ -7,11 +7,13 @@ var express = require('express'),
 
     TOKENSTORE = {},
     PENDING_CONSENT = {},
-    CLIENTS;
+    CLIENTS,
+    USERS;
 
 // CLIENTS = <client_id>=<client_secret>,<client_id>=<client_secret>
 if (!process.env.CLIENTS) {
     CLIENTS = false;
+    console.log('Warning: You did not speficy clients, so you can\'t do client credentials grant.');
 } else {
     CLIENTS = process.env
                 .CLIENTS
@@ -31,12 +33,30 @@ if (!process.env.CLIENTS) {
                 });
 }
 
-function generateToken(scope) {
+// USERS = <uid1>=<password1>,<uid2>=<password2>
+if (!process.env.USERS) {
+    USERS = false;
+    console.log('Warning: You did not speficy users, so you can\'t do password grant.');
+} else {
+    USERS = process.env
+                .USERS
+                .split(',')
+                .map(function(user) {
+                    var credentials = user.split('=');
+                    return {
+                        username: credentials[0],
+                        password: credentials[1]
+                    };
+                });
+}
+
+function generateToken(uid, scope) {
     var token = uuid.v4();
     TOKENSTORE[token] = {
         access_token: token,
         expiration_date: Date.now() + 3600 * 1000,
         token_type: 'Bearer',
+        uid: uid,
         scope: scope || []
     };
     return TOKENSTORE[token];
@@ -106,21 +126,42 @@ function checkClientCredentials(req, res, next) {
 }
 
 server.post('/access_token', checkClientCredentials, function(req, res) {
-    // TODO: check username and password credentials for "password" grant_type
-    // see http://docs.stups.io/en/latest/user-guide/access-control.html#implementing-a-client-using-own-permissions
     var grant_type = req.query.grant_type || req.body.grant_type;
+    // only client_credentials and password are allowed
     if (grant_type !== 'client_credentials' && grant_type !== 'password') {
         return res.status(400).send({
             error: 'invalid_request'
         });
     }
-    var scope = req.query.scope || req.body.scope;
-    var token = generateToken(scope ? scope.split(' ') : []);
-    res.status(200).send({
-        access_token: token.access_token,
-        expires_in: (token.expiration_date - Date.now()) / 1000,
-        token_type: 'Bearer'
-    });
+    var scope = req.query.scope || req.body.scope,
+        scopes = scope ? scope.split(' ') : [];
+    if (grant_type === 'client_credentials') {
+        var auth = basicAuth(req),
+            token = generateToken(auth.name, scopes);
+        res.status(200).send({
+            access_token: token.access_token,
+            expires_in: (token.expiration_date - Date.now()) / 1000,
+            token_type: 'Bearer'
+        });
+    } else {
+        // password grant
+        var username = req.query.username || req.body.username,
+            password = req.query.password || req.body.password,
+            validCredentials =
+                USERS.some(function(u) {
+                    return u.username === username && u.password === password;
+                });
+        if (validCredentials) {
+            var token = generateToken(username, scopes);
+            res.status(200).send({
+                access_token: token.access_token,
+                expires_in: (token.expiration_date - Date.now()) / 1000,
+                token_type: 'Bearer'
+            });
+        } else {
+            res.status(401).send();
+        }
+    }
 });
 
 /**
@@ -162,6 +203,7 @@ server.get('/tokeninfo', function(req,res) {
         access_token: tokeninfo.access_token,
         token_type: tokeninfo.token_type,
         scopes: tokeninfo.scope,
+        uid: tokeninfo.uid,
         expires_in: Math.floor((tokeninfo.expiration_date - Date.now()) / 1000)
     };
     res.status(200).send(response);
@@ -194,7 +236,8 @@ server.post('/accept', function(req, res) {
         return;
     }
     var consentRequest = PENDING_CONSENT[state],
-        token = generateToken(req.body.scope ? req.body.scope.split(',') : []),
+        // FIXME make a login form, check credentials und use uid here
+        token = generateToken(null, req.body.scope ? req.body.scope.split(',') : []),
         success = {
             access_token: token.access_token,
             token_type: 'Bearer',
