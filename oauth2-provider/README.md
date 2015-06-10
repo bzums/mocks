@@ -17,6 +17,7 @@ With Docker
 ### Accepted environment variables
 
 * `CLIENTS`: Comma-separated list of accepted client IDs and secrets, e.g. `"client1=secret1,client2=secret2"`.
+* `USERS`: Needed for the `password` grant. Same format as `CLIENTS`.
 
 ## API
 
