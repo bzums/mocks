@@ -1,5 +1,7 @@
 var express = require('express'),
     request = require('superagent'),
+    basicAuth = require('basic-auth'),
+    querystring = require('querystring'),
     OAUTH_AUTH_URL = process.env.OAUTH_AUTH_URL,
     OAUTH_CREDENTIALS = process.env.OAUTH_CREDENTIALS,
     server = express();
@@ -17,13 +19,21 @@ if (!OAUTH_CREDENTIALS) {
 }
 
 server.get('/access_token', function(req, res) {
+    var auth = basicAuth(req);
+    if (!auth || !auth.name || !auth.pass) {
+        return res.status(400).send();
+    }
     request
         .post(OAUTH_AUTH_URL)
         .set('Authorization', 'Basic ' + OAUTH_CREDENTIALS)
         .query({
             scope: req.query.scope,
-            grant_type: 'client_credentials'
+            grant_type: 'password'
         })
+        .send(querystring.stringify({
+            username: auth.name,
+            password: auth.pass
+        }))
         .end(function(err, response) {
             if (err) {
                 if (err.status === 401) {
