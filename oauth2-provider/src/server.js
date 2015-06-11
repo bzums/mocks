@@ -8,7 +8,8 @@ var express = require('express'),
     TOKENSTORE = {},
     PENDING_CONSENT = {},
     CLIENTS,
-    USERS;
+    USERS,
+    DEFAULT_REALM;
 
 // CLIENTS = <client_id>=<client_secret>,<client_id>=<client_secret>
 if (!process.env.CLIENTS) {
@@ -50,6 +51,8 @@ if (!process.env.USERS) {
                 });
 }
 
+DEFAULT_REALM = process.env.DEFAULT_REALM || 'employees';
+
 function generateToken(uid, realm, scope) {
     var token = uuid.v4();
     TOKENSTORE[token] = {
@@ -57,7 +60,7 @@ function generateToken(uid, realm, scope) {
         expiration_date: Date.now() + 3600 * 1000,
         token_type: 'Bearer',
         uid: uid,
-        realm: realm,
+        realm: realm || DEFAULT_REALM,
         scope: scope || []
     };
     return TOKENSTORE[token];

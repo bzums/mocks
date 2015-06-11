@@ -18,6 +18,7 @@ With Docker
 
 * `CLIENTS`: Comma-separated list of accepted client IDs and secrets, e.g. `"client1=secret1,client2=secret2"`.
 * `USERS`: Needed for the `password` grant. Same format as `CLIENTS`.
+* `DEFAULT_REALM`: Default realm to use if none was specified (default is "employees").
 
 ## API
 
