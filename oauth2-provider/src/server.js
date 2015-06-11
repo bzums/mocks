@@ -13,7 +13,7 @@ var express = require('express'),
 // CLIENTS = <client_id>=<client_secret>,<client_id>=<client_secret>
 if (!process.env.CLIENTS) {
     CLIENTS = false;
-    console.log('Warning: You did not speficy clients, so you can\'t do client credentials grant.');
+    console.log('Warning: You did not specify clients, so you can\'t do client credentials grant.');
 } else {
     CLIENTS = process.env
                 .CLIENTS
@@ -36,7 +36,7 @@ if (!process.env.CLIENTS) {
 // USERS = <uid1>=<password1>,<uid2>=<password2>
 if (!process.env.USERS) {
     USERS = false;
-    console.log('Warning: You did not speficy users, so you can\'t do password grant.');
+    console.log('Warning: You did not specify users, so you can\'t do password grant.');
 } else {
     USERS = process.env
                 .USERS
