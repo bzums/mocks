@@ -43,6 +43,9 @@ definitions:
       token_type:
         type: string
         example: Bearer
+      uid:
+        type: string
+        example: npiccolotto
       scopes:
         type: array
         items:
@@ -110,7 +113,7 @@ paths:
             $ref: "#/definitions/GenericError"
   /access_token:
     post:
-      description: Returns an access token if you provide your client_id and client_secret via Basic Auth.
+      description: Returns an access token
       security:
         - basicAuth: []
       produces:
@@ -119,12 +122,18 @@ paths:
         - name: grant_type
           required: true
           in: query
-          description: Must be client_credentials
+          description: Must be client_credentials or password
           type: string
         - name: scope
           in: query
           description: Whitespace-separated list of scopes you application needs
           type: string
+        - name: username
+          in: query
+          description: Username of the resource owner for password grant
+        - name: password
+          in: query
+          description: Password of the resource owner for password grant
       responses:
         "200":
           description: A new token

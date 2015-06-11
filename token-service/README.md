@@ -1,6 +1,6 @@
 # Token Service Mock
 
-Retrieves a token from the OAuth2 Authorization Server (mock) using client credentials grant.
+Retrieves a token from the OAuth2 Authorization Server (mock) using password grant. Provide resource owner credentials as Basic Auth.
 
 ## Usage
 

@@ -7,11 +7,14 @@ var express = require('express'),
 
     TOKENSTORE = {},
     PENDING_CONSENT = {},
-    CLIENTS;
+    CLIENTS,
+    USERS,
+    DEFAULT_REALM;
 
 // CLIENTS = <client_id>=<client_secret>,<client_id>=<client_secret>
 if (!process.env.CLIENTS) {
     CLIENTS = false;
+    console.log('Warning: You did not specify clients, so you can\'t do client credentials grant.');
 } else {
     CLIENTS = process.env
                 .CLIENTS
@@ -31,12 +34,33 @@ if (!process.env.CLIENTS) {
                 });
 }
 
-function generateToken(scope) {
+// USERS = <uid1>=<password1>,<uid2>=<password2>
+if (!process.env.USERS) {
+    USERS = false;
+    console.log('Warning: You did not specify users, so you can\'t do password grant.');
+} else {
+    USERS = process.env
+                .USERS
+                .split(',')
+                .map(function(user) {
+                    var credentials = user.split('=');
+                    return {
+                        username: credentials[0],
+                        password: credentials[1]
+                    };
+                });
+}
+
+DEFAULT_REALM = process.env.DEFAULT_REALM || 'employees';
+
+function generateToken(uid, realm, scope) {
     var token = uuid.v4();
     TOKENSTORE[token] = {
         access_token: token,
         expiration_date: Date.now() + 3600 * 1000,
         token_type: 'Bearer',
+        uid: uid,
+        realm: realm || DEFAULT_REALM,
         scope: scope || []
     };
     return TOKENSTORE[token];
@@ -68,6 +92,7 @@ server.use(express.static('public'));
 server.use(bodyParser.urlencoded({
     extended: true
 }));
+server.use(bodyParser.json());
 
 // enable CORS for simplicity
 server.use(function(req, res, next) {
@@ -105,17 +130,43 @@ function checkClientCredentials(req, res, next) {
 }
 
 server.post('/access_token', checkClientCredentials, function(req, res) {
-    if (req.query.grant_type !== 'client_credentials') {
+    var grant_type = req.query.grant_type || req.body.grant_type;
+    // only client_credentials and password are allowed
+    if (grant_type !== 'client_credentials' && grant_type !== 'password') {
         return res.status(400).send({
             error: 'invalid_request'
         });
     }
-    var token = generateToken(req.query.scope ? req.query.scope.split(' ') : []);
-    res.status(200).send({
-        access_token: token.access_token,
-        expires_in: (token.expiration_date - Date.now()) / 1000,
-        token_type: 'Bearer'
-    });
+    var scope = req.query.scope || req.body.scope,
+        scopes = scope ? scope.split(' ') : [],
+        realm = req.query.realm || req.body.realm;
+    if (grant_type === 'client_credentials') {
+        var auth = basicAuth(req),
+            token = generateToken(auth.name, realm, scopes);
+        res.status(200).send({
+            access_token: token.access_token,
+            expires_in: (token.expiration_date - Date.now()) / 1000,
+            token_type: 'Bearer'
+        });
+    } else {
+        // password grant
+        var username = req.query.username || req.body.username,
+            password = req.query.password || req.body.password,
+            validCredentials =
+                USERS.some(function(u) {
+                    return u.username === username && u.password === password;
+                });
+        if (validCredentials) {
+            var token = generateToken(username, realm, scopes);
+            res.status(200).send({
+                access_token: token.access_token,
+                expires_in: (token.expiration_date - Date.now()) / 1000,
+                token_type: 'Bearer'
+            });
+        } else {
+            res.status(401).send();
+        }
+    }
 });
 
 /**
@@ -157,6 +208,8 @@ server.get('/tokeninfo', function(req,res) {
         access_token: tokeninfo.access_token,
         token_type: tokeninfo.token_type,
         scopes: tokeninfo.scope,
+        uid: tokeninfo.uid,
+        realm: tokeninfo.realm,
         expires_in: Math.floor((tokeninfo.expiration_date - Date.now()) / 1000)
     };
     res.status(200).send(response);
@@ -189,7 +242,8 @@ server.post('/accept', function(req, res) {
         return;
     }
     var consentRequest = PENDING_CONSENT[state],
-        token = generateToken(req.body.scope ? req.body.scope.split(',') : []),
+        // FIXME make a login form, check credentials und use uid here
+        token = generateToken(null, null, req.body.scope ? req.body.scope.split(',') : []),
         success = {
             access_token: token.access_token,
             token_type: 'Bearer',
