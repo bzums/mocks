@@ -35,8 +35,7 @@ Example usage to generate a new access token:
     }
     EOF
 
-    $ curl -X POST -u my-client-id:my-client-secret -d @request.json \
-        "http://localhost:3000/access_token?realm=services"
+    $ curl -X POST -u my-client-id:my-client-secret -d @request.json -H Content-Type:application/json "http://localhost:3000/access_token?realm=services"
 
 ## Building
 
