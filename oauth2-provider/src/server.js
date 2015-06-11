@@ -206,6 +206,7 @@ server.get('/tokeninfo', function(req,res) {
         token_type: tokeninfo.token_type,
         scopes: tokeninfo.scope,
         uid: tokeninfo.uid,
+        realm: tokeninfo.realm,
         expires_in: Math.floor((tokeninfo.expiration_date - Date.now()) / 1000)
     };
     res.status(200).send(response);
