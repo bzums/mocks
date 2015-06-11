@@ -37,3 +37,7 @@ Example usage to generate a new access token:
 
     $ curl -X POST -u my-client-id:my-client-secret -d @request.json \
         "http://localhost:3000/access_token?realm=services"
+
+## Building
+
+    docker build -t stups/mock-oauth2-provider .

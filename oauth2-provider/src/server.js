@@ -50,13 +50,14 @@ if (!process.env.USERS) {
                 });
 }
 
-function generateToken(uid, scope) {
+function generateToken(uid, realm, scope) {
     var token = uuid.v4();
     TOKENSTORE[token] = {
         access_token: token,
         expiration_date: Date.now() + 3600 * 1000,
         token_type: 'Bearer',
         uid: uid,
+        realm: realm,
         scope: scope || []
     };
     return TOKENSTORE[token];
@@ -134,10 +135,11 @@ server.post('/access_token', checkClientCredentials, function(req, res) {
         });
     }
     var scope = req.query.scope || req.body.scope,
-        scopes = scope ? scope.split(' ') : [];
+        scopes = scope ? scope.split(' ') : [],
+        realm = req.query.realm || req.body.realm;
     if (grant_type === 'client_credentials') {
         var auth = basicAuth(req),
-            token = generateToken(auth.name, scopes);
+            token = generateToken(auth.name, realm, scopes);
         res.status(200).send({
             access_token: token.access_token,
             expires_in: (token.expiration_date - Date.now()) / 1000,
@@ -152,7 +154,7 @@ server.post('/access_token', checkClientCredentials, function(req, res) {
                     return u.username === username && u.password === password;
                 });
         if (validCredentials) {
-            var token = generateToken(username, scopes);
+            var token = generateToken(username, realm, scopes);
             res.status(200).send({
                 access_token: token.access_token,
                 expires_in: (token.expiration_date - Date.now()) / 1000,
@@ -237,7 +239,7 @@ server.post('/accept', function(req, res) {
     }
     var consentRequest = PENDING_CONSENT[state],
         // FIXME make a login form, check credentials und use uid here
-        token = generateToken(null, req.body.scope ? req.body.scope.split(',') : []),
+        token = generateToken(null, null, req.body.scope ? req.body.scope.split(',') : []),
         success = {
             access_token: token.access_token,
             token_type: 'Bearer',
