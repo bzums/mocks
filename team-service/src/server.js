@@ -162,7 +162,7 @@ server.get('/teams/:team_id', function(req, res) {
     });
 });
 
-server.get('/users', function(req, res) {
+server.get('/user', function(req, res) {
     db.all('SELECT uid, team_id FROM users;', function(err, rows) {
         if (err) {
             return res.status(500).send(err);
@@ -171,7 +171,7 @@ server.get('/users', function(req, res) {
     });
 });
 
-server.get('/users/:uid', function(req, res) {
+server.get('/user/:uid', function(req, res) {
     db.get(SELECT_USER, req.params.uid, function(err, row) {
         if (err) {
             return res.status(500).send(err);

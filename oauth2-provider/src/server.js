@@ -291,4 +291,8 @@ server.get('/authorize', function(req, res) {
     });
 });
 
+server.get('/status', function(req, res) {
+   res.sendStatus(200);
+});
+
 server.listen(3000);
