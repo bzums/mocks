@@ -12,6 +12,8 @@ html
             form(action="/accept", method="POST", style="display:inline;")
                 input(name="state", type="hidden", value=state)
                 input(name="scope", type="hidden", value=scope)
+                input(name="type", type="hidden", value=type)
+                input(name="client", type="hidden", value=client)
                 button(type="submit").
                     Yes
             form(action="/decline", method="POST", style="display:inline;")

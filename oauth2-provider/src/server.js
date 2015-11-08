@@ -7,6 +7,7 @@ var express = require('express'),
 
     TOKENSTORE = {},
     PENDING_CONSENT = {},
+    ACCESS_CODES = {},
     CLIENTS,
     USERS,
     DEFAULT_REALM;
@@ -53,6 +54,17 @@ if (!process.env.USERS) {
 
 DEFAULT_REALM = process.env.DEFAULT_REALM || 'employees';
 
+function generateAccessCode(client, realm, scopes) {
+    var code = uuid.v4();
+    ACCESS_CODES[code] = {
+        client: client,
+        realm: realm || DEFAULT_REALM,
+        scopes: scopes || [],
+        expiration_date: Date.now() + 10 * 1000 // better be quick!
+    };
+    return code;
+}
+
 function generateToken(uid, realm, scope) {
     var token = uuid.v4();
     TOKENSTORE[token] = {
@@ -76,7 +88,7 @@ setInterval(function() {
             if (tokeninfo.expiration_date < NOW) {
                 return token;
             }
-            return false
+            return false;
         })
         .filter(function(token) {
             return !!token;
@@ -84,6 +96,25 @@ setInterval(function() {
         .forEach(function(token) {
             delete TOKENSTORE[token];
         });
+}, 1000);
+
+// cleanup job for access codes
+setInterval(function() {
+    var NOW = Date.now();
+    Object
+    .keys(ACCESS_CODES)
+    .filter(function(code) {
+        if (ACCESS_CODES[code].expiration_date < NOW) {
+            return code;
+        }
+        return false;
+    })
+    .filter(function(result) {
+        return !!result;
+    })
+    .forEach(function(code) {
+        delete ACCESS_CODES[code];
+    });
 }, 1000);
 
 server.set('view engine', 'jade');
@@ -102,17 +133,28 @@ server.use(function(req, res, next) {
     next();
 });
 
+
+function getAuth(request) {
+    if (!request.headers.authorization && !request.body.client_id) {
+        return false;
+    }
+    if (request.headers.authorization) {
+        return basicAuth(request);
+    }
+    return { name: request.body.client_id, pass: request.body.client_secret };
+}
+
 /**
  * CLIENT CREDENTIALS FLOW
  */
 
 function checkClientCredentials(req, res, next) {
     var authHeader = req.headers.authorization;
-    if (!authHeader) {
+    if (!authHeader && !req.body.client_id) {
         return res.status(401).send();
     }
-    var auth = basicAuth(req);
-    if (!auth || !auth.name || !auth.pass) {
+    var auth = getAuth(req);
+    if (!auth || !auth.name) {
         return res.status(400).send();
     }
     if (CLIENTS) {
@@ -131,8 +173,8 @@ function checkClientCredentials(req, res, next) {
 
 server.post('/access_token', checkClientCredentials, function(req, res) {
     var grant_type = req.query.grant_type || req.body.grant_type;
-    // only client_credentials and password are allowed
-    if (grant_type !== 'client_credentials' && grant_type !== 'password') {
+    // only client_credentials, authorization_code and password are allowed
+    if (['client_credentials', 'password', 'authorization_code'].indexOf(grant_type) < 0) {
         return res.status(400).send({
             error: 'invalid_request'
         });
@@ -140,15 +182,16 @@ server.post('/access_token', checkClientCredentials, function(req, res) {
     var scope = req.query.scope || req.body.scope,
         scopes = scope ? scope.split(' ') : [],
         realm = req.query.realm || req.body.realm;
+
     if (grant_type === 'client_credentials') {
-        var auth = basicAuth(req),
+        var auth = getAuth(req),
             token = generateToken(auth.name, realm, scopes);
         res.status(200).send({
             access_token: token.access_token,
             expires_in: (token.expiration_date - Date.now()) / 1000,
-            token_type: 'Bearer'
+            token_type: token.token_type
         });
-    } else {
+    } else if (grant_type === 'password_grant') {
         // password grant
         var username = req.query.username || req.body.username,
             password = req.query.password || req.body.password,
@@ -161,7 +204,25 @@ server.post('/access_token', checkClientCredentials, function(req, res) {
             res.status(200).send({
                 access_token: token.access_token,
                 expires_in: (token.expiration_date - Date.now()) / 1000,
-                token_type: 'Bearer'
+                token_type: token.token_type
+            });
+        } else {
+            res.status(401).send();
+        }
+    } else if (grant_type === 'authorization_code') {
+        var code = req.body.code,
+            auth = getAuth(req),
+            client = ACCESS_CODES[code].client,
+            realm = ACCESS_CODES[code].realm,
+            scopes = ACCESS_CODES[code].scopes,
+            redirect = req.body.redirect_uri;
+        if (ACCESS_CODES[code] && client === auth.name) {
+            //FIXME
+            var token = generateToken('__ANON__', realm, scopes);
+            res.status(200).send({
+                access_token: token.access_token,
+                expires_in: (token.expiration_date - Date.now()) / 1000,
+                token_type: token.token_type
             });
         } else {
             res.status(401).send();
@@ -230,28 +291,40 @@ server.post('/decline', function(req, res) {
     var consentRequest = PENDING_CONSENT[state],
         error = { error: 'access_denied', state: state};
     // return error
-    res.redirect(301, consentRequest.redirect_uri + '#' + querystring.stringify(error));
+    res.redirect(302, consentRequest.redirect_uri + '#' + querystring.stringify(error));
 });
 
 server.post('/accept', function(req, res) {
-    var state = req.body.state;
+    var state = req.body.state,
+        type = req.body.type;
     if (!state) {
         res.render('error', {
             message: 'Unknown pending consent'
         });
         return;
     }
-    var consentRequest = PENDING_CONSENT[state],
+    var consentRequest = PENDING_CONSENT[state];
+    if (type === 'token') {
+        // send access token
         // FIXME make a login form, check credentials und use uid here
-        token = generateToken(null, null, req.body.scope ? req.body.scope.split(',') : []),
-        success = {
-            access_token: token.access_token,
-            token_type: 'Bearer',
-            expires_in: (token.expiration_date - Date.now()) / 1000,
+        var token = generateToken(null, null, req.body.scope ? req.body.scope.split(',') : []),
+            success = {
+                access_token: token.access_token,
+                token_type: 'Bearer',
+                expires_in: (token.expiration_date - Date.now()) / 1000,
+                state: state
+            };
+        delete PENDING_CONSENT[state];
+        return res.redirect(302, consentRequest.redirect_uri + '#' + querystring.stringify(success));
+    } else if (type === 'code') {
+        // send an access code
+        var code = generateAccessCode(req.body.client, null, req.body.scope ? req.body.scope.split(',') : []);
+        delete PENDING_CONSENT[state];
+        return res.redirect(302, consentRequest.redirect_uri + '?' + querystring.stringify({
+            code: code,
             state: state
-        };
-    delete PENDING_CONSENT[state];
-    res.redirect(301, consentRequest.redirect_uri + '#' + querystring.stringify(success));
+        }));
+    }
 });
 
 server.get('/authorize', function(req, res) {
@@ -276,23 +349,28 @@ server.get('/authorize', function(req, res) {
             return;
         }
     }
-
     // check mandatory fields
-    if (req.query.response_type !== 'token' || !client_id) {
+    if (['token', 'code'].indexOf(req.query.response_type) < 0 || !client_id) {
         error = { error: 'invalid_request', state: req.query.state };
-        res.redirect(301, req.query.redirect_uri + '#' + querystring.stringify(error));
+        res.redirect(302, req.query.redirect_uri + '#' + querystring.stringify(error));
         return;
     }
 
     PENDING_CONSENT[req.query.state] = req.query;
     res.render('consent', {
         scope: req.query.scope ? req.query.scope.split(' ') : [],
-        state: req.query.state
+        state: req.query.state,
+        type: req.query.response_type,
+        client: client_id
     });
 });
 
 server.get('/status', function(req, res) {
-   res.sendStatus(200);
+   res.status(200).send("OK");
+});
+
+server.get('/', function(req, res) {
+    res.redirect('/status');
 });
 
 server.listen(3000);
