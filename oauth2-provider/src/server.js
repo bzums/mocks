@@ -207,7 +207,7 @@ server.get('/tokeninfo', function(req,res) {
     var response = {
         access_token: tokeninfo.access_token,
         token_type: tokeninfo.token_type,
-        scopes: tokeninfo.scope,
+        scope: tokeninfo.scope,
         uid: tokeninfo.uid,
         realm: tokeninfo.realm,
         expires_in: Math.floor((tokeninfo.expiration_date - Date.now()) / 1000)
