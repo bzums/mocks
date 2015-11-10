@@ -52,6 +52,7 @@ if (!process.env.USERS) {
 }
 
 DEFAULT_REALM = process.env.DEFAULT_REALM || 'employees';
+DEFAULT_UID = process.env.DEFAULT_UID || 'testUser';
 
 function generateToken(uid, realm, scope) {
     var token = uuid.v4();
@@ -59,7 +60,7 @@ function generateToken(uid, realm, scope) {
         access_token: token,
         expiration_date: Date.now() + 3600 * 1000,
         token_type: 'Bearer',
-        uid: uid,
+        uid: uid || DEFAULT_UID,
         realm: realm || DEFAULT_REALM,
         scope: scope || []
     };
