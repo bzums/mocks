@@ -210,15 +210,18 @@ server.post('/access_token', checkClientCredentials, function(req, res) {
             res.status(401).send();
         }
     } else if (grant_type === 'authorization_code') {
-        var code = req.body.code,
+
+        var code = req.body.code.split('=')[1],
             auth = getAuth(req),
             client = ACCESS_CODES[code].client,
             realm = ACCESS_CODES[code].realm,
-            scopes = ACCESS_CODES[code].scopes,
+            scopes = ACCESS_CODES[code].scope,
             redirect = req.body.redirect_uri;
+
         if (ACCESS_CODES[code] && client === auth.name) {
             //FIXME
-            var token = generateToken('__ANON__', realm, scopes);
+            //^^^^^What was/is the problem here?
+            var token = generateToken(client, realm, scopes);
             res.status(200).send({
                 access_token: token.access_token,
                 expires_in: (token.expiration_date - Date.now()) / 1000,
@@ -349,6 +352,7 @@ server.get('/authorize', function(req, res) {
             return;
         }
     }
+
     // check mandatory fields
     if (['token', 'code'].indexOf(req.query.response_type) < 0 || !client_id) {
         error = { error: 'invalid_request', state: req.query.state };
@@ -356,13 +360,21 @@ server.get('/authorize', function(req, res) {
         return;
     }
 
-    PENDING_CONSENT[req.query.state] = req.query;
-    res.render('consent', {
-        scope: req.query.scope ? req.query.scope.split(' ') : [],
-        state: req.query.state,
-        type: req.query.response_type,
-        client: client_id
-    });
+    // Authorization Code Grant: redirect with code
+    if (req.query.response_type === 'code') {
+        var authCode = generateAccessCode(client_id, req.query.realm, req.query.scope);
+        var redirectTo = req.query.redirect_uri + '#' + querystring.stringify({ 'code':  authCode });
+        res.redirect(302, redirectTo);
+    } else {
+
+        PENDING_CONSENT[req.query.state] = req.query;
+        res.render('consent', {
+            scope: req.query.scope ? req.query.scope.split(' ') : [],
+            state: req.query.state,
+            type: req.query.response_type,
+            client: client_id
+        });
+    }
 });
 
 server.get('/status', function(req, res) {
