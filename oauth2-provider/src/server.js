@@ -211,17 +211,16 @@ server.post('/access_token', checkClientCredentials, function(req, res) {
         }
     } else if (grant_type === 'authorization_code') {
 
-        var code = req.body.code.split('=')[1],
-            auth = getAuth(req),
-            client = ACCESS_CODES[code].client,
-            realm = ACCESS_CODES[code].realm,
-            scopes = ACCESS_CODES[code].scope,
-            redirect = req.body.redirect_uri;
+        var code = req.body.code;
+        var auth = getAuth(req);
+        var client = ACCESS_CODES[code].client;
 
         if (ACCESS_CODES[code] && client === auth.name) {
-            //FIXME
-            //^^^^^What was/is the problem here?
-            var token = generateToken(client, realm, scopes);
+            var realm = ACCESS_CODES[code].realm,
+                scopes = ACCESS_CODES[code].scope,
+                redirect = req.body.redirect_uri;
+                token = generateToken(client, realm, scopes);
+
             res.status(200).send({
                 access_token: token.access_token,
                 expires_in: (token.expiration_date - Date.now()) / 1000,
@@ -298,15 +297,18 @@ server.post('/decline', function(req, res) {
 });
 
 server.post('/accept', function(req, res) {
+
     var state = req.body.state,
+        client = req.body.client
         type = req.body.type;
-    if (!state) {
+    if (!client) {
         res.render('error', {
             message: 'Unknown pending consent'
         });
         return;
     }
-    var consentRequest = PENDING_CONSENT[state];
+    var consentRequest = PENDING_CONSENT[client];
+
     if (type === 'token') {
         // send access token
         // FIXME make a login form, check credentials und use uid here
@@ -317,12 +319,12 @@ server.post('/accept', function(req, res) {
                 expires_in: (token.expiration_date - Date.now()) / 1000,
                 state: state
             };
-        delete PENDING_CONSENT[state];
+        delete PENDING_CONSENT[client];
         return res.redirect(302, consentRequest.redirect_uri + '#' + querystring.stringify(success));
     } else if (type === 'code') {
         // send an access code
         var code = generateAccessCode(req.body.client, null, req.body.scope ? req.body.scope.split(',') : []);
-        delete PENDING_CONSENT[state];
+        delete PENDING_CONSENT[client];
         return res.redirect(302, consentRequest.redirect_uri + '?' + querystring.stringify({
             code: code,
             state: state
@@ -362,9 +364,18 @@ server.get('/authorize', function(req, res) {
 
     // Authorization Code Grant: redirect with code
     if (req.query.response_type === 'code') {
-        var authCode = generateAccessCode(client_id, req.query.realm, req.query.scope);
+
+        PENDING_CONSENT[req.query.client_id] = req.query;
+        res.render('consent', {
+            scope: req.query.scope ? req.query.scope.split(' ') : [],
+            state: req.query.state,
+            type: req.query.response_type,
+            client: client_id
+        });
+
+        /*var authCode = generateAccessCode(client_id, req.query.realm, req.query.scope);
         var redirectTo = req.query.redirect_uri + '#' + querystring.stringify({ 'code':  authCode });
-        res.redirect(302, redirectTo);
+        res.redirect(302, redirectTo);*/
     } else {
 
         PENDING_CONSENT[req.query.state] = req.query;
